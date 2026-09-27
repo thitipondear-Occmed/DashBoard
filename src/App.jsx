@@ -56,28 +56,48 @@ export default function InterestingCaseDashboard() {
           
           const timeRaw = item["Timestamp"] || item["ประทับเวลา"] || "";
           let formattedDate = "ไม่ระบุวันที่";
-          let parsedYear = 2026;
+          let parsedYear = 2026; 
           let parsedMonth = 9;
-          
+
           if (timeRaw) {
-            const parts = String(timeRaw).split(' ');
-            if (parts.length > 0) {
-              const dateParts = parts[0].split('/'); 
-              if (dateParts.length === 3) {
-                parsedMonth = parseInt(dateParts[0], 10);
-                const day = String(dateParts[1]).padStart(2, '0');
-                const month = String(dateParts[0]).padStart(2, '0');
-                let year = parseInt(dateParts[2], 10);
-                
-                if (year < 2400) {
-                  parsedYear = year;
-                  year = year + 543;
+            // ลองแปลงเป็นรูปแบบมาตรฐานสากล (ISO String)
+            const dateObj = new Date(timeRaw);
+            
+            if (!isNaN(dateObj.getTime())) {
+              const day = String(dateObj.getDate()).padStart(2, '0');
+              const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+              let year = dateObj.getFullYear();
+              
+              parsedYear = year < 2400 ? year : year - 543;
+              parsedMonth = dateObj.getMonth() + 1;
+              const displayYear = year < 2400 ? year + 543 : year;
+              
+              const hours = String(dateObj.getHours()).padStart(2, '0');
+              const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+              
+              formattedDate = `${day}/${month}/${displayYear} ${hours}:${minutes}`;
+            } else {
+              // กรณีดึงมาเป็น Text ธรรมดาที่อ่านไม่ออก (เช่น "27/09/2569")
+              const parts = String(timeRaw).split(' ');
+              if (parts.length > 0) {
+                const dateParts = parts[0].includes('/') ? parts[0].split('/') : parts[0].split('-');
+                if (dateParts.length === 3) {
+                  let yearIndex = dateParts[2].length >= 4 ? 2 : 0;
+                  let year = parseInt(dateParts[yearIndex], 10);
+                  let dayIndex = yearIndex === 2 ? 0 : 2;
+                  
+                  const day = String(dateParts[dayIndex]).padStart(2, '0');
+                  const month = String(dateParts[1]).padStart(2, '0');
+                  
+                  parsedYear = year < 2400 ? year : year - 543;
+                  parsedMonth = parseInt(dateParts[1], 10);
+                  const displayYear = year < 2400 ? year + 543 : year;
+                  
+                  const timePart = parts[1] ? parts[1].substring(0, 5) : "";
+                  formattedDate = `${day}/${month}/${displayYear}${timePart ? ' ' + timePart : ''}`;
                 } else {
-                  parsedYear = year - 543;
+                  formattedDate = String(timeRaw);
                 }
-                
-                const timePart = parts[1] ? parts[1].substring(0, 5) : "";
-                formattedDate = `${day}/${month}/${year}${timePart ? ' ' + timePart : ''}`;
               }
             }
           }
