@@ -93,7 +93,6 @@ export default function InterestingCaseDashboard() {
             }
           }
 
-          // 🌟 ดึงสถานะเดิมที่เคยเซฟไว้กลับมาแสดง
           return {
             id: `C${item._rowNumber || index + 2}`,
             timestamp: formattedDate,
@@ -103,7 +102,7 @@ export default function InterestingCaseDashboard() {
             topic: String(item["ประเด็นสำคัญ"] || "ไม่มีหัวข้อ"),
             epas: [epaLabel],
             link: item["targetLink"] || "#",
-            // อ่านค่า Boolean และ Text จาก Google Sheets
+            aiSummary: String(item["aiSummary"] || ""), // 🌟 ดึงข้อมูลสรุปจาก AI
             isNominated: item["isNominated"] === true || item["isNominated"] === "true" || item["isNominated"] === "TRUE",
             isApproved: item["isApproved"] === true || item["isApproved"] === "true" || item["isApproved"] === "TRUE",
             isPresented: item["isPresented"] === true || item["isPresented"] === "true" || item["isPresented"] === "TRUE",
@@ -174,13 +173,10 @@ export default function InterestingCaseDashboard() {
     return groups;
   }, [filteredCases]);
 
-  // 🌟 ฟังก์ชันส่งข้อมูลไปบันทึกลง Google Sheets
   const updateCase = async (id, updates) => {
-    // 1. อัปเดตหน้าจอผู้ใช้ทันที (Optimistic UI) 
     setCases(prevCases => prevCases.map(c => c.id === id ? { ...c, ...updates } : c));
     setSelectedCase(prev => prev && prev.id === id ? { ...prev, ...updates } : prev);
 
-    // 2. แอบส่ง Request ไปอัปเดต Google Sheets เบื้องหลัง
     try {
       const rowNum = parseInt(id.replace('C', ''), 10);
       await fetch(WEB_APP_URL, {
@@ -426,6 +422,18 @@ export default function InterestingCaseDashboard() {
 
               {selectedCase.isPresented && <div className="bg-slate-100 border border-slate-300 text-slate-700 p-3 rounded-lg flex items-center gap-2 font-bold text-sm shadow-sm"><IconPresentation /> เคสนี้ถูกนำไปใช้พรีเซนต์ใน Conference แล้ว</div>}
               {!selectedCase.isPresented && selectedCase.isApproved && <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-lg flex items-center gap-2 font-bold text-sm shadow-sm"><IconCheck /> 🎉 อาจารย์ (Staff) ได้อนุมัติเลือกเคสนี้สำหรับทำ Conference แล้ว</div>}
+
+              {/* 🌟 กล่องแสดงข้อความที่สรุปมาจาก AI (Gemini) */}
+              {selectedCase.aiSummary && selectedCase.aiSummary !== "ไม่มีลิงก์ไฟล์แนบให้สรุป" && !selectedCase.aiSummary.includes("[รอประมวลผล") && (
+                <div className="p-4 bg-purple-50 rounded-xl border border-purple-200">
+                  <h4 className="text-sm font-bold text-purple-900 mb-2 flex items-center gap-1.5">
+                    ✨ สรุปเนื้อหาเบื้องต้นโดย AI (Gemini)
+                  </h4>
+                  <p className="text-sm text-purple-900 bg-white p-4 rounded-lg border border-purple-200 whitespace-pre-wrap leading-relaxed shadow-sm">
+                    {selectedCase.aiSummary}
+                  </p>
+                </div>
+              )}
 
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <h4 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-1.5">
