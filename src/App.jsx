@@ -60,7 +60,6 @@ export default function InterestingCaseDashboard() {
           let parsedMonth = 9;
 
           if (timeRaw) {
-            // ลองแปลงเป็นรูปแบบมาตรฐานสากล (ISO String)
             const dateObj = new Date(timeRaw);
             
             if (!isNaN(dateObj.getTime())) {
@@ -77,7 +76,6 @@ export default function InterestingCaseDashboard() {
               
               formattedDate = `${day}/${month}/${displayYear} ${hours}:${minutes}`;
             } else {
-              // กรณีดึงมาเป็น Text ธรรมดาที่อ่านไม่ออก (เช่น "27/09/2569")
               const parts = String(timeRaw).split(' ');
               if (parts.length > 0) {
                 const dateParts = parts[0].includes('/') ? parts[0].split('/') : parts[0].split('-');
@@ -402,7 +400,6 @@ export default function InterestingCaseDashboard() {
         </div>
       </main>
 
-      {/* Modal หน้าต่างแสดงรายละเอียดเคส */}
       {selectedCase && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
           <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity cursor-pointer" onClick={() => setSelectedCase(null)}></div>
@@ -423,7 +420,6 @@ export default function InterestingCaseDashboard() {
               {selectedCase.isPresented && <div className="bg-slate-100 border border-slate-300 text-slate-700 p-3 rounded-lg flex items-center gap-2 font-bold text-sm shadow-sm"><IconPresentation /> เคสนี้ถูกนำไปใช้พรีเซนต์ใน Conference แล้ว</div>}
               {!selectedCase.isPresented && selectedCase.isApproved && <div className="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-lg flex items-center gap-2 font-bold text-sm shadow-sm"><IconCheck /> 🎉 อาจารย์ (Staff) ได้อนุมัติเลือกเคสนี้สำหรับทำ Conference แล้ว</div>}
 
-              {/* 🌟 ช่องสำหรับ Chief Resident สรุปเคสและประเด็นนำเสนอ 🌟 */}
               <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
                 <h4 className="text-sm font-bold text-blue-900 mb-2 flex items-center gap-1.5">
                   <IconFileText /> สรุปเคสและประเด็นสำคัญที่จะนำเสนอ (Case Summary & Discussion by Chief)
@@ -521,7 +517,7 @@ export default function InterestingCaseDashboard() {
               </div>
             </div>
             <button 
-              onClick={() => setIsSuccessScreenOpen(text => text)}
+              onClick={() => setIsSuccessScreenOpen(true)}
               disabled={cases.filter(c => c.isApproved && !c.isPresented).length === 0}
               className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-2.5 px-6 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2 cursor-pointer"
             >
