@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
-// 👇 ลิงก์ Deploy Google Apps Script ของคุณหมอ
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzeiTHHm_MxC4ihIne9X5UgNeUzCBx-6fAbLNsFaPMYOBLGnskGhnSXhkp2gF5r3-dWUw/exec";
+// 👇 ใส่ลิงก์ Deploy Google Apps Script ตัวใหม่ล่าสุดของคุณหมอที่นี่
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxsrrRlFpqKPaovzVQM8nIGeiA_FDpe6x9FNj7f-4u_U-liUVaSV6u-SIku_m2f_PIPMA/exec";
 
 const EPA_DICTIONARY = {
   "EPA1": { name: "EPA 1: Fit for work / Return to work", color: "bg-blue-100 text-blue-800 border-blue-200" },
@@ -61,19 +61,15 @@ export default function InterestingCaseDashboard() {
 
           if (timeRaw) {
             const dateObj = new Date(timeRaw);
-            
             if (!isNaN(dateObj.getTime())) {
               const day = String(dateObj.getDate()).padStart(2, '0');
               const month = String(dateObj.getMonth() + 1).padStart(2, '0');
               let year = dateObj.getFullYear();
-              
               parsedYear = year < 2400 ? year : year - 543;
               parsedMonth = dateObj.getMonth() + 1;
               const displayYear = year < 2400 ? year + 543 : year;
-              
               const hours = String(dateObj.getHours()).padStart(2, '0');
               const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-              
               formattedDate = `${day}/${month}/${displayYear} ${hours}:${minutes}`;
             } else {
               const parts = String(timeRaw).split(' ');
@@ -83,14 +79,11 @@ export default function InterestingCaseDashboard() {
                   let yearIndex = dateParts[2].length >= 4 ? 2 : 0;
                   let year = parseInt(dateParts[yearIndex], 10);
                   let dayIndex = yearIndex === 2 ? 0 : 2;
-                  
                   const day = String(dateParts[dayIndex]).padStart(2, '0');
                   const month = String(dateParts[1]).padStart(2, '0');
-                  
                   parsedYear = year < 2400 ? year : year - 543;
                   parsedMonth = parseInt(dateParts[1], 10);
                   const displayYear = year < 2400 ? year + 543 : year;
-                  
                   const timePart = parts[1] ? parts[1].substring(0, 5) : "";
                   formattedDate = `${day}/${month}/${displayYear}${timePart ? ' ' + timePart : ''}`;
                 } else {
@@ -100,6 +93,7 @@ export default function InterestingCaseDashboard() {
             }
           }
 
+          // 🌟 ดึงสถานะเดิมที่เคยเซฟไว้กลับมาแสดง
           return {
             id: `C${item._rowNumber || index + 2}`,
             timestamp: formattedDate,
@@ -109,11 +103,12 @@ export default function InterestingCaseDashboard() {
             topic: String(item["ประเด็นสำคัญ"] || "ไม่มีหัวข้อ"),
             epas: [epaLabel],
             link: item["targetLink"] || "#",
-            presentationPoints: "",
-            isNominated: false,
-            isApproved: false,
-            isPresented: false,
-            staffFeedback: ""
+            // อ่านค่า Boolean และ Text จาก Google Sheets
+            isNominated: item["isNominated"] === true || item["isNominated"] === "true" || item["isNominated"] === "TRUE",
+            isApproved: item["isApproved"] === true || item["isApproved"] === "true" || item["isApproved"] === "TRUE",
+            isPresented: item["isPresented"] === true || item["isPresented"] === "true" || item["isPresented"] === "TRUE",
+            presentationPoints: String(item["presentationPoints"] || ""),
+            staffFeedback: String(item["staffFeedback"] || "")
           };
         });
         
@@ -154,7 +149,6 @@ export default function InterestingCaseDashboard() {
       }
       return 0;
     });
-
     return result;
   }, [cases, activeFilter, statusFilter, searchQuery, userRole]);
 
@@ -163,7 +157,6 @@ export default function InterestingCaseDashboard() {
       "มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน",
       "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"
     ];
-
     const groups = {};
     filteredCases.forEach(c => {
       let monthName = "ข้อมูลทั้งหมด";
@@ -181,9 +174,23 @@ export default function InterestingCaseDashboard() {
     return groups;
   }, [filteredCases]);
 
-  const updateCase = (id, updates) => {
+  // 🌟 ฟังก์ชันส่งข้อมูลไปบันทึกลง Google Sheets
+  const updateCase = async (id, updates) => {
+    // 1. อัปเดตหน้าจอผู้ใช้ทันที (Optimistic UI) 
     setCases(prevCases => prevCases.map(c => c.id === id ? { ...c, ...updates } : c));
     setSelectedCase(prev => prev && prev.id === id ? { ...prev, ...updates } : prev);
+
+    // 2. แอบส่ง Request ไปอัปเดต Google Sheets เบื้องหลัง
+    try {
+      const rowNum = parseInt(id.replace('C', ''), 10);
+      await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ rowNumber: rowNum, updates: updates })
+      });
+    } catch (err) {
+      console.error("Save error:", err);
+    }
   };
 
   const handleCaseClick = (item) => {
@@ -430,7 +437,8 @@ export default function InterestingCaseDashboard() {
                     className="w-full text-sm p-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none resize-none bg-white shadow-inner" rows="5"
                     placeholder="Chief Resident กรุณาพิมพ์สรุป Case (อาการสำคัญ, ผลตรวจ) และ Discuss (ประเด็นปัญหา/ข้อถกเถียง) ให้อาจารย์ที่นี่..."
                     value={selectedCase.presentationPoints || ""}
-                    onChange={(e) => setSelectedCase({ ...selectedCase, presentationPoints: e.target.value })}
+                    onChange={(e) => updateCase(selectedCase.id, { presentationPoints: e.target.value })}
+                    onBlur={(e) => updateCase(selectedCase.id, { presentationPoints: e.target.value })}
                   ></textarea>
                 ) : (
                   <p className="text-sm text-blue-900 bg-white p-4 rounded-lg border border-blue-200 min-h-[5rem] whitespace-pre-wrap">{selectedCase.presentationPoints || <span className="text-slate-400 italic">Chief ยังไม่ได้ระบุสรุปเคสและประเด็นนำเสนอ</span>}</p>
@@ -446,6 +454,7 @@ export default function InterestingCaseDashboard() {
                       placeholder="พิมพ์ข้อเสนอแนะเพิ่มเติมเพื่อไกด์ Resident ได้ที่นี่..."
                       value={selectedCase.staffFeedback || ""}
                       onChange={(e) => updateCase(selectedCase.id, { staffFeedback: e.target.value })}
+                      onBlur={(e) => updateCase(selectedCase.id, { staffFeedback: e.target.value })}
                     ></textarea>
                   ) : (
                     <p className="text-sm text-emerald-800 bg-white p-3 rounded-lg border border-emerald-100 min-h-[3rem]">{selectedCase.staffFeedback || <span className="text-emerald-600/50 italic">อาจารย์ไม่ได้ระบุข้อเสนอแนะเพิ่มเติม</span>}</p>
@@ -480,7 +489,7 @@ export default function InterestingCaseDashboard() {
                     return (
                       <button 
                         disabled={isNominateDisabled}
-                        onClick={() => updateCase(selectedCase.id, { isNominated: !selectedCase.isNominated, presentationPoints: selectedCase.presentationPoints })}
+                        onClick={() => updateCase(selectedCase.id, { isNominated: !selectedCase.isNominated })}
                         className={`flex items-center justify-center gap-1 px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-sm border cursor-pointer w-full sm:w-auto
                           ${isNominateDisabled ? 'bg-slate-100 text-slate-400 border-slate-200 cursor-not-allowed opacity-70' : selectedCase.isNominated ? 'bg-amber-100 text-amber-800 border-amber-300 hover:bg-amber-200' : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'}`}
                       >
