@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 
 // 👇 ใส่ลิงก์ Deploy Google Apps Script ตัวใหม่ล่าสุดของคุณหมอที่นี่
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzR-2crMnHulx1XPO4L-GPF0QgqRtwb7iby8AsvGJKvGD8nUTIRkZGYLmT8n_ftff8z3w/exec";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxgLumD6kzLY5otSXPp_U4bUYlIKUvP0D4ZGrapDVUxlZsiu2Ns0PDjDsNAcUqCLjbhUg/exec";
 
 const EPA_DICTIONARY = {
   "EPA1": { name: "EPA 1: Fit for work / Return to work", color: "bg-blue-100 text-blue-800 border-blue-200" },
